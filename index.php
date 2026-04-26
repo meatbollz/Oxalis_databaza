@@ -1,3 +1,72 @@
+<?php
+    $konektik = mysqli_connect("localhost", "root", "root", "filmova_databaza");
+    if(!$konektik) {
+        echo "Nepripojilo sa :(";
+    } else {
+        echo "Pripojilo sa :)";
+    }
+
+if(isset($_POST['submit'])) {
+    $nazov = $_POST['nazov'];
+    $zaner = $_POST['zaner'];
+    $dlzka = $_POST['dlzka'];
+
+    $sql = "INSERT INTO filmy (nazov, zaner, dlzka) VALUES ('$nazov', '$zaner', '$dlzka')";
+    if (!mysqli_query($konektik, $sql)) {
+        echo mysqli_error($konektik);
+    }
+
+    $meno = $_POST['meno'];
+    $priezvisko = $_POST['priezvisko'];
+    $vek = $_POST['vek'];
+
+    $sql = "INSERT INTO reziser (meno, priezvisko, vek) VALUES ('$meno', '$priezvisko', '$vek')";
+    if (!mysqli_query($konektik, $sql)) {
+        echo mysqli_error($konektik);
+    }
+}
+
+if(isset($_POST['zmen'])) {
+    $zmeny_f = array();
+
+    if (!empty($_POST['nazov'])){
+        $zmeny_f[] = "nazov='" . $_POST["nazov"]. "'";
+    }
+    if (!empty($_POST['zaner'])){
+        $zmeny_f[] = "zaner='" . $_POST["zaner"]. "'";
+    }
+    if (!empty($_POST['dlzka'])){
+        $zmeny_f[] = "dlzka='" . $_POST["dlzka"]. "'";
+    }
+    
+    if (!empty($zmeny_f)) {
+        $sql = "UPDATE filmy SET " . implode(", ", $zmeny_f);
+        mysqli_query($konektik, $sql);
+    }
+
+    $zmeny_r = array();
+    if (!empty($_POST['meno'])){
+        $zmeny_r[] = "meno='" . $_POST["meno"]. "'";
+    }
+    if (!empty($_POST['priezvisko'])){
+        $zmeny_r[] = "priezvisko='" . $_POST["priezvisko"]. "'";
+    }
+    if (!empty($_POST['vek'])){
+        $zmeny_r[] = "vek='" . $_POST["vek"]. "'";
+    }
+
+    if (!empty($zmeny_r)) {
+        $sql = "UPDATE reziser SET " . implode(", ", $zmeny_r);
+        mysqli_query($konektik, $sql);
+    }
+}
+    
+    if(isset($_POST['vymaz'])) {
+        mysqli_query($konektik, "TRUNCATE TABLE filmy");
+        mysqli_query($konektik, "TRUNCATE TABLE reziser");
+    }
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,42 +90,27 @@
         <label for="vek">Vek rezisera: </label><input type="text" name="vek">
         <br>
         <input type="submit" value="pridaj" name="submit">
+        <input type="submit" value="zmen" name="zmen">
+        <input type="submit" value="vymaz" name="vymaz">
     </form>
-    <?php 
-        $serverik = new mysqli("localhost", "root", "root");
-        $vytvorik = "CREATE DATABASE IF NOT EXISTS filmova_databaza;";
-        $kvery = mysqli_query($serverik, $vytvorik);
-        $konektik = mysqli_connect("localhost", "root", "root", "filmova_databaza");
+<?php
+$sql = "SELECT filmy.nazov, filmy.zaner, filmy.dlzka,
+               reziser.meno, reziser.priezvisko, reziser.vek
+        FROM filmy
+        JOIN reziser";
 
-        if(!$konektik) {
-            echo "Nepripojilo sa :(";
-        } else {
-            echo "Pripojilo sa :)";
-        }
-        $reziser = "CREATE TABLE IF NOT EXISTS reziser(
-        reziser_id int primary key auto_increment,
-        meno varchar(30) not null,
-        priezvisko varchar(30) not null,
-        vek int not null);";
+$result = mysqli_query($konektik, $sql);
 
-        $filmy = "CREATE TABLE IF NOT EXISTS filmy( 
-        film_id int primary key auto_increment,
-        reziser_id int not null,
-        nazov varchar(50) unique not null,
-        zaner varchar(25) not null,
-        dlzka int not null,
-        foreign key (reziser_id) references reziser(reziser_id));";
+while ($row = mysqli_fetch_assoc($result)){
+    echo "<h1>Názov: " . $row["nazov"] . "</h1>";
+    echo "<p>Žáner: " . $row["zaner"] . "</p>";
+    echo "<p>Dĺžka: " . $row["dlzka"] . " minút</p>";
+    
+    echo "<h2>Režisér</h2>";
+    echo "<p>Meno: " . $row["meno"] . "</p>";
+    echo "<p>Priezvisko: " . $row["priezvisko"] . "</p>";
+    echo "<p>Vek: " . $row["vek"] . "</p>";
 
-        $kvery = mysqli_query($conn, $film);
-        $kvery = mysqli_query($conn, $reziser);
-
-
-        $dummy_film = "INSERT INTO filmy (nazov, zaner, dlzka) VALUES ('Project Hail Mary', 'Sci-Fi', '157');";
-        $dummy_reziser = "INSERT INTO reziser (meno, priezvisko, vek) VALUES ('Phillip', 'Lord', '50')";
-
-        $kvery = mysqli_query($conn, $dummy_film);
-        $kvery = mysqli_query($conn, $dummy_reziser);
-
-    ?>
-</body>
-</html>
+    echo "</div>";
+}
+?>
